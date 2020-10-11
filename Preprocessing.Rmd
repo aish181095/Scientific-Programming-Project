@@ -133,12 +133,15 @@ imputed_data_5<-complete(imputed_mice_pmm,5)
 
 ```
 
-## Including Plots
+```{r}
+#export the imputed datasets as csv file
+write.csv(imputed_data_1."imputed data 1.csv",row.names=FALSE)
+write.csv(imputed_data_2."imputed data 2.csv",row.names=FALSE)
+write.csv(imputed_data_3."imputed data 3.csv",row.names=FALSE)
+write.csv(imputed_data_4."imputed data 4.csv",row.names=FALSE)
+write.csv(imputed_data_5."imputed data 5.csv",row.names=FALSE)```
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

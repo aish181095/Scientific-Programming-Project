@@ -179,6 +179,7 @@ model_opt_parameters <- expand.grid(
 nrow(model_opt_parameters)
 ```
 
+
 ```{r}
 set.seed(34)
 # Fit a model

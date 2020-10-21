@@ -1,0 +1,188 @@
+```{r}
+#Set up the working directory
+DATA.DIR    <- "C:\\Users\\HP\\Desktop\\scientific programming"
+RESULTS.DIR <-  "C:\\Users\\HP\\Desktop\\scientific programming"
+setwd(DATA.DIR)
+
+imputed_data_1<-read.csv("imputed data 1.csv")
+```
+
+```{r}
+##Merging classes into one 
+#imputed data 1
+imputed_data_1$Mild_Severity<- 2*(imputed_data_1$Mild_Severity)
+imputed_data_1$Moderate_Severity<-3*(imputed_data_1$Moderate_Severity)
+imputed_data_1$Severe<-4*(imputed_data_1$Severe)
+#combine data
+imputed_data_1$class<-as.factor(imputed_data_1$Mild_Severity+imputed_data_1$Moderate_Severity+imputed_data_1$No_Severity+imputed_data_1$Severe)
+imputed_data_1$Mild_Severity<-NULL
+imputed_data_1$Moderate_Severity<-NULL
+imputed_data_1$No_Severity<-NULL
+imputed_data_1$Severe<-NULL
+
+```
+
+```{r}
+# summarize the class distribution
+percentage <- prop.table(table(imputed_data_1$class)) * 100
+cbind(freq=table(imputed_data_1$class), percentage=percentage)
+library(caret)
+set.seed(100)
+index <- createDataPartition(imputed_data_1$class, p = 0.7, list = FALSE)
+train_data <- imputed_data_1[index, ]
+test_data  <- imputed_data_1[-index, ]
+
+set.seed(101)
+validation_index<-createDataPartition(train_data$class, p = 0.7, list = FALSE)
+train_data <- train_data[validation_index, ]
+validation_data  <- train_data[-validation_index, ]
+
+
+#summarise training dataset labels
+
+
+percentage <- prop.table(table(train_data$class)) * 100
+cbind(freq=table(train_data$class), percentage=percentage)
+
+```
+
+```{r}
+set.seed(35)
+# Fit a model
+model_reg <- caret::train(as.numeric(class) ~ ., data = train_data,
+                     method = "ranger",
+                     num.trees = 1000,
+                     importance = "impurity",
+                     trControl = trainControl(method = "oob", number = 3))
+save(model_reg,file="model_reg.RData")
+
+
+```
+
+```{r}
+model_reg$bestTune
+plot(model_reg)
+```
+
+```{r}
+#optimising mtry (number of variables)
+# hyperparameter grid search
+reg_grid_mtry <- expand.grid(
+  mtry      = c(1,2),
+  splitrule="extratrees",
+  min.node.size  = c(500,1000,2000,5000,10000,50000,100000)
+  
+  )
+
+# total number of combinations
+nrow(reg_grid_mtry)
+## [1] 96
+```
+
+```{r}
+set.seed(34)
+# Fit a model
+model_reg_mtry <- caret::train(as.numeric(class) ~ ., data = train_data,
+                     method = "ranger",
+                     tuneGrid = reg_grid_mtry,
+                     num.trees = 1000,
+                     importance = "impurity",
+                     trControl = trainControl(method = "oob", number = 3))
+save(model_reg_mtry,file="model_reg_mtry.RData")
+
+
+```
+
+```{r}
+model_reg_mtry$bestTune
+plot(model_reg_mtry)
+```
+
+```{r}
+#optimising mtry (number of variables)
+# hyperparameter grid search
+opt_reg_grid <- expand.grid(
+  mtry      = c(1),
+  splitrule="extratrees",
+  min.node.size  = c(100000)
+  
+  )
+
+# total number of combinations
+nrow(opt_reg_grid)
+## [1] 96
+```
+
+```{r}
+set.seed(34)
+# Fit a model
+opt_model_reg <- caret::train(as.numeric(class) ~ ., data = train_data,
+                     method = "ranger",
+                     tuneGrid = opt_reg_grid,
+                     num.trees = 1000,
+                     importance = "impurity",
+                     trControl = trainControl(method = "oob", number = 3))
+save(opt_model_reg ,file="opt_model_reg .RData")
+```
+
+```{r}
+#variable importance for regression
+regression_importance<-varImp(opt_model_reg,scale = FALSE)
+
+plot(regression_importance)
+```
+
+```{r}
+roc_imp <- filterVarImp(x = train_data[, -ncol(train_data)], y = as.numeric(train_data$class))
+print(roc_imp)
+```
+
+```{r}
+#predicting test test
+predict_reg_validation<-data.frame(predict(opt_model_reg,validation_data[,-24]))
+predict_reg_validation$pred_class<-predict_validation
+predict_reg_validation$true_class<-validation_data$class
+
+#subset rows having same value
+same_values<-subset(predict_reg_validation,pred_class==true_class)
+diff_values<-subset(predict_reg_validation,pred_class!=true_class)
+```
+
+```{r}
+#Calcute the mean and stad deviation for each class
+values_for_class_1<-subset(diff_values,true_class==1)
+values_for_class_2<-subset(diff_values,true_class==2)
+values_for_class_3<-subset(diff_values,true_class==3)
+values_for_class_4<-subset(diff_values,true_class==4)
+colnames(values_for_class_1)<-c("pred","pred_class","true_class")
+colnames(values_for_class_2)<-c("pred","pred_class","true_class")
+colnames(values_for_class_3)<-c("pred","pred_class","true_class")
+colnames(values_for_class_4)<-c("pred","pred_class","true_class")
+summary_covid<-data.frame(rbind(values_for_class_1,values_for_class_2,values_for_class_3,values_for_class_4))
+levels(summary_covid$true_class) <- c("No_Severity", "Mild_Severity", "Moderate_Severity","Severity")
+
+mean_class_1<-mean(values_for_class_1$predict.opt_model_reg..validation_data....24..)
+mean_class_2<-mean(values_for_class_2$predict.opt_model_reg..validation_data....24..)
+mean_class_3<-mean(values_for_class_3$predict.opt_model_reg..validation_data....24..)
+mean_class_4<-mean(values_for_class_4$predict.opt_model_reg..validation_data....24..)
+summary_mean<-c(2.5,2.5,2.499,2.499)
+std_dev_1<-mean(values_for_class_1$predict.opt_model_reg..validation_data....24..)
+std_dev_2<-mean(values_for_class_2$predict.opt_model_reg..validation_data....24..)
+std_dev_3<-mean(values_for_class_3$predict.opt_model_reg..validation_data....24..)
+std_dev_4<-mean(values_for_class_4$predict.opt_model_reg..validation_data....24..)
+summary_std_dev<-c(2.5,2.5,2.499,2.499)
+summary_covid_class<-data.frame(cbind(summary_mean,summary_std_dev))
+rownames(summary_covid_class)<-c("No_Severity", "Mild_Severity", "Moderate_Severity","Severity")
+colnames(summary_covid_class)<-c("Mean","std dev")
+```
+
+```{r}
+summary_covid %>%
+  ggplot(aes(x = true_class,
+             y = pred,
+             fill = true_class))+
+  geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
+             geom="pointrange", color="yellow")
+ggsave("Violinplot_ggplot2_colored_by_variable_R.png")
+
+```

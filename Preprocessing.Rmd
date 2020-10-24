@@ -31,7 +31,7 @@ RESULTS.DIR <-  "C:\\Users\\HP\\Desktop\\scientific programming"
 setwd(DATA.DIR)
 
 #read the file 
-covid_symptoms_data<-read.csv("COVID_Agi.csv")
+covid_symptoms_data<-read.csv("Covid_symptoms.csv")
 ```
 
 ```{r}

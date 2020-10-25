@@ -1,5 +1,5 @@
 ---
-title: "Pre-processing"
+title: "Pre-processing of Covid Symtoms data"
 author: "Aishwarya Iyer"
 date: "11/10/2020"
 output:
@@ -105,10 +105,10 @@ plot <- aggr(covid_symptoms_data[,1:26], col=c('navyblue','yellow'),
 ```
 
 ```{r}
-
+#Imputing the missing values
 imputed_mice_pmm<-mice(covid_symptoms_data,method='pmm',maxit=5,m=5)
 summary(imputed_mice_pmm)
-save(imputed_mice_pmm, file = "Imputed_mice_pmm.RData")
+save(imputed_mice_pmm, file = "imputed_mice_pmm.RData")
 ```
 
 ```{r,r, out.width='1\\linewidth', fig.asp=0.5, fig.ncol = 1, fig.cap="output",fig.align = "center"}

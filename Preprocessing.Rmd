@@ -17,8 +17,8 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 ```{r}
-Packages required
-suppressPackageStartupMessages(library(Tidyverse))
+#Packages required
+suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(VIM))
 suppressPackageStartupMessages(library(Hmisc))
 suppressPackageStartupMessages(library(mice))
@@ -50,14 +50,16 @@ colnames(covid_symptoms_data)<-column_names
 
 ## Overall look of the dataframe (consists of int-integer, dbl-double(numeric),fct-factor)
 glimpse(covid_symptoms_data)
-table(describe(covid_symptoms_data))
+
+describe(covid_symptoms_data)#for each variable the number fo samples. missing values, distinct values, sum of values and mean of values.
+##Negative values, Missing values and values higher than 1 are detected for columns. 
 ##The data is binary data with 316800 samples and 27 variables which contains one categorical variable of country.
 ```
 
 ```{r}
 #Finding abnormal values in the data 
 #Values below 0 (negative values)
-data_new<-filter_all(covid_symptoms_data[,1:26], any_vars(. < 0))
+data_zero<-filter_all(covid_symptoms_data[,1:26], any_vars(. < 0))
 #Values above 1
 data_positive<-filter_all(covid_symptoms_data[,1:26], any_vars(. > 1))
 data_five<-filter_all(covid_symptoms_data[,1:26], any_vars(. ==0.5))
@@ -95,7 +97,7 @@ sapply(covid_symptoms_data[,1:26], function(df){
 })
 ```
 
-```{r,fig.height=8,fig.width=15,dpi=100}
+```{r,fig.height=9,fig.width=20,dpi=100}
 #visulaise the missing values
 
 plot <- aggr(covid_symptoms_data[,1:26], col=c('navyblue','yellow'),
@@ -106,29 +108,17 @@ plot <- aggr(covid_symptoms_data[,1:26], col=c('navyblue','yellow'),
 
 ```{r}
 #Imputing the missing values
-imputed_mice_pmm<-mice(covid_symptoms_data,method='pmm',maxit=5,m=5)
+imputed_mice_pmm<-mice(covid_symptoms_data,method='pmm',maxit=5,m=1)#m is numbe rof imputation , maxit=no of iterations
 summary(imputed_mice_pmm)
 save(imputed_mice_pmm, file = "imputed_mice_pmm.RData")
 ```
 
-```{r,r, out.width='1\\linewidth', fig.asp=0.5, fig.ncol = 1, fig.cap="output",fig.align = "center"}
+
+```{r}
 #Plot the distribution of values for observed and imputed values for each variable.
-  densityplot(x=imputed_mice_pmm,data= ~ Difficulty_in_Breathing)
-densityplot(x=imputed_mice_pmm,data= ~ No_Symptoms)
-densityplot(x=imputed_mice_pmm,data= ~ Runny_nose)
-densityplot(x=imputed_mice_pmm,data= ~ None_Experiencing)
-densityplot(x=imputed_mice_pmm,data= ~ Age_0_9)
-densityplot(x=imputed_mice_pmm,data= ~ Age_10_19)
-densityplot(x=imputed_mice_pmm,data= ~ Age_20_24)
-densityplot(x=imputed_mice_pmm,data= ~ Age_25_59)
-densityplot(x=imputed_mice_pmm,data= ~ Age_60)
-densityplot(x=imputed_mice_pmm,data= ~ Gender_Female)
-densityplot(x=imputed_mice_pmm,data= ~ Gender_Male)
-densityplot(x=imputed_mice_pmm,data= ~ Genger_Transgender)
-densityplot(x=imputed_mice_pmm,data= ~ Mild_Severity)
-densityplot(x=imputed_mice_pmm,data= ~ Moderate_Severity)
-densityplot(x=imputed_mice_pmm,data= ~ No_Severity)
-densityplot(x=imputed_mice_pmm,data= ~ Severe)
+densityplot(imputed_mice_pmm)
+
+#The distribution of imputed values fit well with observed values.
 ```
 
 ```{r}

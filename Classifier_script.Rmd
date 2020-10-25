@@ -5,6 +5,7 @@ date: "25/10/2020"
 output:
   pdf_document: default
   html_document: default
+  #Description: The COVID symptoms dataset contains 23 predictor variables and 24th column containing four levels (No Severity, Mild Severity, Moderate Severity and Severe). These levels are treated as catergorical labels and Ranger (faster version of Rnadom Forest) classification is implemeted to predict the four levels. Additionally, the levels are converted into continous scale ( converting four categorical levels from range 1 to 4). This is done to mimick the contonuity between the classes. Since the levels are not independent of each other, which means an individual from No Severity can enter Mild Severity and an individual can be between two level of severity). In the end the resulst from classification and regression prediction using ranger are compared for the misclassfied labels in Ranger Classification Prediction.
 ---
 
 ```{r setup, include=FALSE}
@@ -16,6 +17,14 @@ knitr::opts_chunk$set(echo = TRUE)
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r}
+#Required packages
+suppressPackageStartupMessages(library(caret))
+suppressPackageStartupMessages(library(ranger))
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(PRROC))
+suppressPackageStartupMessages(library(ggplot2))
+```
 
 ```{r}
 #Set up the working directory where the imputed dataset is saved
@@ -33,7 +42,7 @@ imputed_data<-read.csv("imputed data 1.csv")
 ```
 
 ```{r}
-##Merging classes into classes (No_severity, Mild_severity,Moderate_severity, Severity into one class)
+##Merging classes into class column (No_severity, Mild_severity,Moderate_severity, Severity into one class)
 ##Multiplying Mild_Severity (with 2),Moderate_severity(with 3) and severity(with 4)
 imputed_data$Mild_Severity<- 2*(imputed_data$Mild_Severity)
 imputed_data$Moderate_Severity<-3*(imputed_data$Moderate_Severity)
@@ -43,7 +52,7 @@ imputed_data$Severe<-4*(imputed_data$Severe)
 #combine column in covid symptoms data to one class column
 imputed_data$class<-as.factor(imputed_data$Mild_Severity+imputed_data$Moderate_Severity+imputed_data$No_Severity+imputed_data$Severe)
 
-#Remove the redundant clomuns from dataframe
+#Remove the redundant columns from dataframe
 imputed_data$Mild_Severity<-NULL
 imputed_data$Moderate_Severity<-NULL
 imputed_data$No_Severity<-NULL
@@ -94,7 +103,8 @@ cbind(freq=table(test_data$class), percentage=percentage)
 #################################
 Classification using Ranger
 #################################
-
+##Model Optimisation: The Model optimisation was performed using 1000 trees.Given the computational difficulty in running the optimisation mode for number of trees a higher number of trees are selected. The code for optimisation is shown in this script but was not run. Further, 'caret' R package allows to optimise the following parameters for Ranger Model: mtry (Number of variables considered for tree split at each node), Minimal Node size (determines the depth of the tree, higher values-more depth) and splitrule. For classification 'gini' is default for ranger. For computational feasability given the large training dataset  the model was first optimised for mtry values and then optimised for minimal node size. 
+The optimised model was then used to predict for validation dataset and the ROC curves for the prediction was plotted. The same was doen for Test dataset. The ROC plots of both Test and Vlaidation dataset were comparable showing consistency of model prediction. The accuracy of the model is around 24 % which is indicates poor performance of teh model. This low value of accuracy is due to the inherent quality of the dataset. This is beacuse this datatset has been synthetically generated and therefore it assigns equal weigth to each variable and categories. Normal population features are not represented by this daya and hence the prediction itself is quite poor. 
 
 #Optimising model parameters with training dataset
 ```{r}
@@ -169,6 +179,7 @@ model_opt_mtry$bestTune#best tuning parameters for mtry
 #ploting Out of bag Accuracy for mtry values in hyperparameter grid 
 plot(model_opt_mtry,main="Optimising number of variables available for splitting at each tree node",cex.labels=2)
 
+## mtry value of 1 was selected for further optimsing the minimal node split.
 ```
 
 
@@ -209,6 +220,8 @@ model_opt_nodes$bestTune#best tuning parameters for mtry
 
 #ploting Out of bag Accuracy for minimal node size values in hyperparameter grid 
 plot(model_opt_nodes,main="Optimising minimal node size for model")
+
+## Minimal node split of 100000 was used for the optimised Ranger classification Model.
 ```
 
 ```{r}
@@ -254,7 +267,7 @@ classification_importance<-varImp(optimised_model,scale = FALSE)
 #Ploting the importance of varaiable.
 plot(classification_importance,main="Variable importance for Classification Ranger Model")
 ```
-
+##Checking the Sensitivity and Specicifity of prediction using validation dataset
 ```{r}
 #predicting validation data
 
@@ -273,7 +286,7 @@ seperate_validation_class <- predict(sep_validation, validation_classes) %>% as.
 
 
 ```{r}
-library(PRROC)
+
 #calculating True Postive rate and False Positive Rates for each class probability distribution for Validation dataset
 PRROC_no_severity <- roc.curve(scores.class0 = predict_validation$No_Severity, weights.class0=seperate_validation_class$validation_data.class.No_Severity,
                        curve=TRUE)
@@ -304,7 +317,7 @@ plot(PRROC_severity,main="ROC curve for Severity",xlab="1-Specificity")
 
 
 ```{r}
-#plotting the confusion matrix to compare the predicted and reference output for the test data
+#plotting the confusion matrix to compare the predicted and reference output for the validation data
 table <- data.frame(confusionMatrix(table(predict_valid,validation_data[,24]))$table)
 colnames(table)<-c("Observed","Prediction","Freq")
 plotTable <- table %>%
@@ -312,7 +325,7 @@ plotTable <- table %>%
   group_by(Observed) %>%
   mutate(prop = Freq/sum(Freq))
 
-#ploting teh confusion matrix for validation dataset
+#ploting the confusion matrix for validation dataset
 Confusion_matrix<-ggplot(data = plotTable, mapping = aes(x = Observed, y = Prediction, fill = goodbad, alpha = Freq)) +
   geom_tile() +
   geom_text(aes(label = Freq), vjust = .5, fontface  = "bold", alpha = 1) +
@@ -325,7 +338,7 @@ print(Confusion_matrix + ggtitle("Confusion Matrix for Validation dataset"))
 ```
 
 ```{r}
-#plotting the confusion matrix to compare the predicted and reference output for the test data
+#plotting the confusion matrix to compare the predicted and reference output for the validation data
 table <- data.frame(confusionMatrix(table(validation_data[,24],validation_data[,24]))$table)
 colnames(table)<-c("Observed","Prediction","Freq")
 plotTable <- table %>%
@@ -343,7 +356,7 @@ Confusion_matrix<-ggplot(data = plotTable, mapping = aes(x = Observed, y = Predi
 print(Confusion_matrix + ggtitle("Confusion Matrix for ideal classification in validation dataset"))
 
 ```
-
+##Prediction using Test dataset and comparing the sensitivity and specicificity using ROC curve
 ```{r}
 ##Prediction for test dataset
 
@@ -376,7 +389,7 @@ PRROC_severity_test <- roc.curve(scores.class0 = predict_test_prob$Severity, wei
 ```
 
 ```{r}
-##Ploting teh ROC curve for Test dataset
+##Ploting the ROC curve for Test dataset
 
 par(mfrow=c(2,2))
 plot(PRROC_no_severity_test,main="ROC curve for No Severity",xlab="1-Specificity")
@@ -433,7 +446,7 @@ print(Confusion_matrix + ggtitle("Confusion Matrix for ideal classification in T
 ##################################
 Regression using Ranger
 ##################################
-
+#Regression was performed using Ranger by converting the categorical labels to continous scale ( 1,2,3 and 4). The optimisation was performed the same way as for classification model. Instead of focusing on the accuracy from this model, the prediction from this model was used to analyse the misclassified laels from classification model prediction. This was done to identify the intermediate ranges for the misclassified labels and if any trend in ranges were visisble.
 ```{r}
 #For regression the class levels need to be of continous range.
 
@@ -633,7 +646,7 @@ summary_covid %>%
              fill = Classification_prediction))+
   geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
              geom="pointrange", color="yellow")
-#ggsave("Violinplot_ggplot2_colored_by_variable_R.png")
+ggsave("Violin plot indicating the predicted regression values for Misclassified lables for validation data.png")
 
 ```
 
@@ -646,7 +659,7 @@ summary_covid %>%
              fill = true_class))+
   geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
              geom="pointrange", color="yellow")
-#ggsave("Violinplot_ggplot2_colored_by_variable_R.png")
+#ggsave("Violin plot indicating the predicted regression values for True lables for validation data .png")
 
 ```
 
@@ -716,7 +729,7 @@ summary_covid_test %>%
              fill = Classification_prediction))+
   geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
              geom="pointrange", color="yellow")
-#ggsave("Violinplot_ggplot2_colored_by_variable_R.png")
+ggsave("Violin plot indicating the predicted regression values for Misclassified lables for test data.png")
 
 ```
 
@@ -727,6 +740,6 @@ summary_covid_test %>%
              fill = true_class))+
   geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
              geom="pointrange", color="yellow")
-#ggsave("Violinplot_ggplot2_colored_by_variable_R.png")
+#ggsave("Violin plot indicating the predicted regression values for True lables for validation data.png")
 
 ```

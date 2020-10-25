@@ -73,7 +73,7 @@ cbind(freq=table(imputed_data$class), percentage=percentage) #the classes/levels
 #Split the imputed data into training data. validation data and test data (holdout)
 library(caret)
 set.seed(100)
-index <- createDataPartition(imputed_data_1$class, p = 0.7, list = FALSE)
+index <- createDataPartition(imputed_data$class, p = 0.7, list = FALSE)
 train_data <- imputed_data[index, ]
 test_data  <- imputed_data[-index, ]
 
@@ -108,33 +108,33 @@ The optimised model was then used to predict for validation dataset and the ROC 
 
 #Optimising model parameters with training dataset
 ```{r}
-##Optimising number of trees 
-model_grid_trees <- expand.grid(
+##Optimising number of trees  (was not run, took a lot of time to run)
+#model_grid_trees <- expand.grid(
   num.trees=c(50,100,500,1000,2000)
   
   )
 
 # total number of combinations
-nrow(model_grid_trees)
+#nrow(model_grid_trees)
 ```
 
 ```{r}
-set.seed(34)
-for(i in 1:nrow(model_grid_trees)) {
+#set.seed(34)
+#for(i in 1:nrow(model_grid_trees)) {
 # Fit a model for optimising trees
-model_opt_trees <- caret::train(as.factor(class) ~ ., data = train_data,
+#model_opt_trees <- caret::train(as.factor(class) ~ ., data = train_data,
                      method = "ranger",
                      num.trees = model_grid_trees$num.trees[i],
                      importance = "impurity",
                      trControl = trainControl(method = "oob", number = 3))
-}
-save(model_opt_trees,file="model_opt_trees.RData")
+#}
+#save(model_opt_trees,file="model_opt_trees.RData")
 ```
 
 ```{r}
 
 #Ploting to idenitfy optimal number of trees 
-plot(model_opt_trees)
+#plot(model_opt_trees)
 ```
 
 ```{r}
@@ -279,8 +279,8 @@ predict_valid<-predict(optimised_model,validation_data)
 
 #Creating a dataframe of four class levels
 validation_class<-data.frame(validation_data$class)
-sep_validation <- dummyVars(~ ., validation_classes, fullRank = FALSE)#seperating the class levels 
-seperate_validation_class <- predict(sep_validation, validation_classes) %>% as.data.frame() #dataframe with separate classes 
+sep_validation <- dummyVars(~ ., validation_class, fullRank = FALSE)#seperating the class levels 
+seperate_validation_class <- predict(sep_validation, validation_class) %>% as.data.frame() #dataframe with separate classes 
 ```
 
 
@@ -487,6 +487,7 @@ model_reg <- caret::train(as.numeric(class) ~ ., data = train_data,
 save(model_reg,file="model_reg.RData")
 
 #Import the R.Data file
+
 lnames = load(file = "model_reg.RData");
 
 ```
@@ -495,6 +496,7 @@ lnames = load(file = "model_reg.RData");
 
 model_reg$bestTune #Best tuning parameters for mtry 
 plot(model_reg,main="Optimising the number of variables available for splitting at each tree node for regression model")
+#mtry value of 1 and extratrees splitrule are selected for minimal node size optimisation
 ```
 
 ```{r}
@@ -533,6 +535,9 @@ lnames = load(file = "model_reg_mtry.RData");
 ```{r}
 model_reg_mtry$bestTune #best tuning parameters for mtry and minimal node size
 plot(model_reg_mtry,main="Optimising the minimal node size for regression model")
+
+
+print("minimal node size of 100000 and extratrees splitrule are selected for optimised model for regression")
 ```
 
 ```{r}
@@ -585,14 +590,6 @@ levels(predict_reg_validation$pred_class)<-c(1,2,3,4) #converting the classes in
 predict_reg_validation$true_class<-validation_data$class #adding the true classes from the validation dataset
 ```
 
-```{r}
-predict_reg_prob<-predict(opt_model_reg,validation_data,type="raw")
-
-
-validation_reg<-data.frame(validation_data$class)
-sep_validation_reg <- dummyVars(~ ., validation_reg, fullRank = FALSE)
-seperate_validation_class_reg <- predict(sep_validation_reg, validation_reg) %>% as.data.frame()
-```
 
 ```{r}
 #Calculate ROC curve for Regression model 
@@ -601,7 +598,7 @@ PRROC_reg_validation<- roc.curve(scores.class0 = predict_reg_validation$predict.
                        curve=TRUE)
 
 #Ploting the ROC curve for Regression model
-plot(PRROC_reg_validation,main="ROC curve for Regression Ranger Model")
+plot(PRROC_reg_validation,main="ROC curve for Regression Ranger Model",xlab="1-Specificity")
 ```
 
 
@@ -645,8 +642,9 @@ summary_covid %>%
              y = Regression_prediction,
              fill = Classification_prediction))+
   geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
-             geom="pointrange", color="yellow")
-ggsave("Violin plot indicating the predicted regression values for Misclassified lables for validation data.png")
+             geom="pointrange", color="yellow")+
+  ggtitle("Violin plot indicating the predicted regression values for \n Misclassified labels for validation data")
+ggsave("Violin plot indicating the predicted regression values for Misclassified labels for validation data.png")#save image
 
 ```
 
@@ -658,8 +656,9 @@ summary_covid %>%
              y = Regression_prediction,
              fill = true_class))+
   geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
-             geom="pointrange", color="yellow")
-#ggsave("Violin plot indicating the predicted regression values for True lables for validation data .png")
+             geom="pointrange", color="yellow")+
+   ggtitle("Violin plot indicating the predicted regression values for \n True labels for validation data")
+ggsave("Violin plot indicating the predicted regression values for True labels for validation data .png")#save image
 
 ```
 
@@ -674,15 +673,6 @@ predict_reg_test$true_class<-test_data$class
 ```
 
 ```{r}
-predict_reg_test<-predict(opt_model_reg,test_data,type="raw")
-
-
-test_reg<-data.frame(test_data$class)
-sep_test_reg <- dummyVars(~ ., test_reg, fullRank = FALSE)
-seperate_test_class_reg <- predict(sep_test_reg, test_reg) %>% as.data.frame()
-```
-
-```{r}
 #Calculating TPR and FPR for regression prediction
 
 PRROC_reg_test<- roc.curve(scores.class0 = predict_reg_test$predict.opt_model_reg..test_data....24.., weights.class0=as.numeric(test_data$class),
@@ -690,7 +680,7 @@ PRROC_reg_test<- roc.curve(scores.class0 = predict_reg_test$predict.opt_model_re
 
 #ploting the ROC curve for regression model
 
-plot(PRROC_reg_test,main="ROC curve for Test dataset for Regression Ranger Model")
+plot(PRROC_reg_test,main="ROC curve for Test dataset for Regression Ranger Model",xlab="1-Specificity")
 ```
 ```{r}
 #Identify classes that are misclassified for classification model using ranger and subset the corresponding regression model prediction for test dataset
@@ -728,8 +718,9 @@ summary_covid_test %>%
              y = Regression_prediction,
              fill = Classification_prediction))+
   geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
-             geom="pointrange", color="yellow")
-ggsave("Violin plot indicating the predicted regression values for Misclassified lables for test data.png")
+             geom="pointrange", color="yellow")+
+  ggtitle("Violin plot indicating the predicted regression values for \n  Misclassified labels for test data")
+ggsave("Violin plot indicating the predicted regression values for Misclassified labels for test data.png")#save image
 
 ```
 
@@ -739,7 +730,10 @@ summary_covid_test %>%
              y = Regression_prediction,
              fill = true_class))+
   geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
-             geom="pointrange", color="yellow")
-#ggsave("Violin plot indicating the predicted regression values for True lables for validation data.png")
+             geom="pointrange", color="yellow")+
+   ggtitle("Violin plot indicating the predicted regression values for True labels for test data")
+ggsave("Violin plot indicating the predicted regression values for True labels for validation data.png")#save image
 
 ```
+##from observing the plot for misclassified labels vs the predicted regression values for validation and test dataset we see that the range of predicted regression values is around 2.5 for all classes. Additionally we observe and increase in trend across the severity classes. This indicates the range of values indicates the increasing in severity for predicted regression values ( although these values are between 2.5).
+#We also observe that the model sensistivity and specificity is consistent (although the overall accuracy for both model is low~25%) for validation as well as test dataset ( shown by ROC curves) for both classification and regression model for ranger. This shows the reproducibility of the model for unseen datasets (datasets it was not trained on).  

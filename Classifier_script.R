@@ -589,7 +589,10 @@ predict_reg_validation$pred_class<-predict_valid #adding the prediction from the
 levels(predict_reg_validation$pred_class)<-c(1,2,3,4) #converting the classes in the classification column to continous class
 predict_reg_validation$true_class<-validation_data$class #adding the true classes from the validation dataset
 ```
-
+```{r}
+#calculate RMSE value for validation data
+sqrt(mean((predict(opt_model_reg,newdata=validation_data) - as.numeric(validation_data$class))^2)) #1.112961 is close to RMSE for training set 1.118052
+```
 
 ```{r}
 #Calculate ROC curve for Regression model 
@@ -670,6 +673,11 @@ predict_reg_test$Classification_prediction<-predict_test
 levels(predict_reg_test$Classification_prediction)<-c(1,2,3,4)
 
 predict_reg_test$true_class<-test_data$class
+```
+
+```{r}
+#calculate RMSE value for validation data
+sqrt(mean((predict(opt_model_reg,newdata=test_data) - as.numeric(test_data$class))^2)) #1.118046 is close to RMSE for training set 1.118052
 ```
 
 ```{r}

@@ -309,7 +309,7 @@ PRROC_severity <- roc.curve(scores.class0 = predict_validation$Severity, weights
 par(mfrow=c(2,2))
 plot(PRROC_no_severity,main="ROC curve for No Severity",xlab="1-Specificity")
 plot(PRROC_mild_severity,main="ROC curve for Mild Severity",xlab="1-Specificity")
-plot(PRROC_moderate_severity,main="ROC curve for Moderrate Severity",xlab="1-Specificity")
+plot(PRROC_moderate_severity,main="ROC curve for Moderate Severity",xlab="1-Specificity")
 plot(PRROC_severity,main="ROC curve for Severity",xlab="1-Specificity")
 ```
 
@@ -393,9 +393,9 @@ PRROC_severity_test <- roc.curve(scores.class0 = predict_test_prob$Severity, wei
 
 par(mfrow=c(2,2))
 plot(PRROC_no_severity_test,main="ROC curve for No Severity",xlab="1-Specificity")
-plot(PRROC_mild_severity_test,main="ROC curve for No Severity",xlab="1-Specificity")
-plot(PRROC_moderate_severity_test,main="ROC curve for No Severity",xlab="1-Specificity")
-plot(PRROC_severity_test,main="ROC curve for No Severity",xlab="1-Specificity")
+plot(PRROC_mild_severity_test,main="ROC curve for Mild Severity",xlab="1-Specificity")
+plot(PRROC_moderate_severity_test,main="ROC curve for Moderate Severity",xlab="1-Specificity")
+plot(PRROC_severity_test,main="ROC curve for Severity",xlab="1-Specificity")
 ```
 
 

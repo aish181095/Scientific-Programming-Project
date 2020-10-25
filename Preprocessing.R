@@ -108,6 +108,17 @@ plot <- aggr(covid_symptoms_data[,1:26], col=c('navyblue','yellow'),
 ```
 
 ```{r}
+#ploting the missing data visulaisation
+gg_miss_var(covid_symptoms_data) + labs(y = "Look at all the missing ones",cex.labels=1.2)+
+  theme(axis.text.x = element_text(size = "11"),
+        axis.text.y = element_text(size = "11"),
+        axis.title.x.bottom = element_text(size="11"))+
+  ggtitle("Missing data visualisation")+
+  theme(plot.title = element_text(hjust = 0.5,size=30))
+ggsave("Missing data visualisation.png")#save the plot
+```
+
+```{r}
 #Imputing the missing values
 imputed_mice_pmm<-mice(covid_symptoms_data,method='pmm',maxit=5,m=1)#m is numbe rof imputation , maxit=no of iterations
 summary(imputed_mice_pmm)

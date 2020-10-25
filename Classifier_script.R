@@ -664,7 +664,19 @@ summary_covid %>%
 ggsave("Violin plot indicating the predicted regression values for True labels for validation data .png")#save image
 
 ```
+```{r}
 
+#Ploting the prediction values from regression with the true class prediction
+same_values %>%
+  ggplot(aes(x = pred_class,
+             y = predict.opt_model_reg..validation_data....24..,
+             fill = pred_class))+
+  geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
+             geom="pointrange", color="yellow")+
+   ggtitle("Violin plot indicating the predicted regression values for \n Correctly classified labels for validation data")
+ggsave("Violin plot indicating the predicted regression values for Correctly classified labels for validation data .png")#save image
+
+```
 
 ```{r}
 #predicting test dataset
@@ -741,6 +753,31 @@ summary_covid_test %>%
              geom="pointrange", color="yellow")+
    ggtitle("Violin plot indicating the predicted regression values for True labels for test data")
 ggsave("Violin plot indicating the predicted regression values for True labels for validation data.png")#save image
+
+```
+
+```{r}
+
+#Ploting the prediction values from regression with the true class prediction
+same_values %>%
+  ggplot(aes(x = pred_class,
+             y = predict.opt_model_reg..validation_data....24..,
+             fill = pred_class))+
+  geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
+             geom="pointrange", color="yellow")+
+   ggtitle("Violin plot indicating the predicted regression values for \n Correctly classified labels for validation data")
+ggsave("Violin plot indicating the predicted regression values for Correctly classified labels for validation data .png")#save image
+
+```
+```{r}
+same_values_test %>%
+  ggplot(aes(x = Classification_prediction,
+             y = predict.opt_model_reg..test_data....24..,
+             fill = Classification_prediction))+
+  geom_violin()+ stat_summary(fun.data=mean_sdl, mult=2, 
+             geom="pointrange", color="yellow")+
+   ggtitle("Violin plot indicating the predicted regression values for Correctly classified labels for test data")
+ggsave("Violin plot indicating the predicted regression values for Correctly classified labels for test.png")#save image
 
 ```
 ##from observing the plot for misclassified labels vs the predicted regression values for validation and test dataset we see that the range of predicted regression values is around 2.5 for all classes. Additionally we observe and increase in trend across the severity classes. This indicates the range of values indicates the increasing in severity for predicted regression values ( although these values are between 2.5).

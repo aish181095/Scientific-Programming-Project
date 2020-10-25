@@ -1,5 +1,5 @@
 ---
-title: "Classifier"
+title: "Classification and Regression Model using Ranger"
 author: "Aishwarya Iyer"
 date: "25/10/2020"
 output:

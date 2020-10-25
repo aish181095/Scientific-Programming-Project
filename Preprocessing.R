@@ -24,6 +24,7 @@ suppressPackageStartupMessages(library(Hmisc))
 suppressPackageStartupMessages(library(mice))
 ```
 
+
 ```{r}
 #Set up the working directory
 DATA.DIR    <- "C:\\Users\\HP\\Desktop\\scientific programming"

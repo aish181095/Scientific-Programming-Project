@@ -1,5 +1,5 @@
 ---
-title: "Pre-processing of Covid Symtoms data"
+title: "Pre-processing of Covid Symptoms data"
 author: "Aishwarya Iyer"
 date: "11/10/2020"
 output:
